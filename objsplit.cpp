@@ -1,5 +1,4 @@
 // tool that splits obj file by material
-// no vt/vn supported!
 
 #include <vector>
 #include <string>
@@ -45,24 +44,57 @@ std::istream& operator>> (std::istream& in, face& a)
 std::vector<std::string> v,vn,vt;
 void save(std::string filename, std::vector<face> poly)
 {
-	// save vertex only!!!
+	typedef __gnu_pbds::tree<
+			int,
+			__gnu_pbds::null_type,
+			std::less<int>,
+			__gnu_pbds::rb_tree_tag,
+			__gnu_pbds::tree_order_statistics_node_update
+			> IDtable;
 	std::ofstream out(filename);
-	__gnu_pbds::tree<int,__gnu_pbds::null_type,std::less<int>,__gnu_pbds::rb_tree_tag,__gnu_pbds::tree_order_statistics_node_update> vid;
+	IDtable vid;
+	IDtable vtid;
+	IDtable vnid;
 	for (auto f: poly) {
 		vid.insert(f.a.indices[0]);
 		vid.insert(f.b.indices[0]);
 		vid.insert(f.c.indices[0]);
+		if (f.a.indices[1]) vtid.insert(f.a.indices[1]);
+		if (f.b.indices[1]) vtid.insert(f.b.indices[1]);
+		if (f.c.indices[1]) vtid.insert(f.c.indices[1]);
+		if (f.a.indices[2]) vnid.insert(f.a.indices[2]);
+		if (f.b.indices[2]) vnid.insert(f.b.indices[2]);
+		if (f.c.indices[2]) vnid.insert(f.c.indices[2]);
 	}
 	for (int id: vid) {
 		out << v[id-1] << std::endl;
 	}
+	for (int id: vtid) {
+		out << vt[id-1] << std::endl;
+	}
+	for (int id: vnid) {
+		out << vn[id-1] << std::endl;
+	}
+	auto printvert = [&](ID a) {
+		out << vid.order_of_key(a.indices[0])+1;
+		if (!a.indices[1] && !a.indices[2]) return;
+		out << "/";
+		if (a.indices[1]) out << vtid.order_of_key(a.indices[1])+1;
+		if (!a.indices[2]) return;
+		out << "/";
+		out << vnid.order_of_key(a.indices[2])+1;
+	};
 	for (auto f: poly) {
-		out << "f " << vid.order_of_key(f.a.indices[0])+1
-			<< " "  << vid.order_of_key(f.b.indices[0])+1
-			<< " "  << vid.order_of_key(f.c.indices[0])+1
-			<< "\n";
+		out << "f ";
+		printvert(f.a);
+		out << " ";
+		printvert(f.b);
+		out << " ";
+		printvert(f.c);
+		out << "\n";
 	}
 }
+
 
 int main(int argc, char* argv[])
 {
