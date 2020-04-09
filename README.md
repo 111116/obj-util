@@ -1,8 +1,8 @@
 c++ scripts used to handle obj model files
 
-triangulate: convert obj so that it only contains triangles.
+triangulate: convert ascii obj so that it only contains triangles.
 
-objsplit: split big obj file by material (removes any other info) into small obj files named `<mtlname>.obj`
+objsplit: split big obj (ascii, triangulated) file by material (removes any other info) into small obj files named `<mtlname>.obj`
 
 usage
 
